@@ -5,6 +5,7 @@ from django.db import transaction
 
 from core.base_model import Model
 
+logger = structlog.get_logger(__name__)
 
 class UseCaseRequest(Model):
     pass
@@ -17,10 +18,12 @@ class UseCaseResponse(Model):
 
 class UseCase(Protocol):
     def execute(self, request: UseCaseRequest) -> UseCaseResponse:
-        with structlog.contextvars.bound_contextvars(
-            **self._get_context_vars(request),
-        ):
-            return self._execute(request)
+        try:
+            with structlog.contextvars.bound_contextvars(**self._get_context_vars(request)):
+                return self._execute(request)
+        except Exception as e:
+            logger.error(f"Error executing use case: {self.__class__.__name__}", exc_info=e)
+            return UseCaseResponse(error=str(e))
 
     def _get_context_vars(self, request: UseCaseRequest) -> dict[str, Any]:  # noqa: ARG002
         """

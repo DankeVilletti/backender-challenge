@@ -1,7 +1,8 @@
 import re
 from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any
+from datetime import datetime
+from typing import Any, List, Tuple
 
 import clickhouse_connect
 import structlog
@@ -44,10 +45,7 @@ class EventLogClient:
         finally:
             client.close()
 
-    def insert(
-        self,
-        data: list[Model],
-    ) -> None:
+    def insert(self, data: list[Model], ) -> None:
         try:
             self._client.insert(
                 data=self._convert_data(data),
@@ -67,7 +65,7 @@ class EventLogClient:
             logger.error('failed to execute clickhouse query', error=str(e))
             return
 
-    def _convert_data(self, data: list[Model]) -> list[tuple[Any]]:
+    def _convert_data(self, data: list[Model]) -> list[tuple[str, Any, Any, str]]:
         return [
             (
                 self._to_snake_case(event.__class__.__name__),

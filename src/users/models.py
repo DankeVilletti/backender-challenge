@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractBaseUser
+from django.core.serializers import serialize
 from django.db import models
 
 from core.models import TimeStampedModel
@@ -23,3 +24,6 @@ class User(TimeStampedModel, AbstractBaseUser):
             return f'{self.first_name} {self.last_name}'
 
         return self.email
+
+    def model_dump_json(self):
+        return serialize('json', [self])[1:-1]  # [1:-1] убирает обертку из списка
